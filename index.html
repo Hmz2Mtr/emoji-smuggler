@@ -252,6 +252,19 @@
       color: var(--border2);
     }
 
+    /* ── SPIDER WEB ── */
+    .web-corner {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: clamp(120px, 15vw, 180px);
+      height: clamp(120px, 15vw, 180px);
+      z-index: 10;
+      opacity: 0.15;
+      pointer-events: none;
+      color: var(--green);
+    }
+
     /* ── PAGE WRAPPER ── */
     .wrap {
       position: relative;
@@ -1101,21 +1114,57 @@
   <!-- ── MAIN APP (hidden until unlocked) ── -->
   <div id="appContent">
 
-    <!-- HEADER -->
-    <header>
-      <div class="badge">
-        <span class="badge-dot"></span>
-        SYSTEM ONLINE &mdash; ALL PROCESSING IS LOCAL &mdash; NO DATA LEAVES YOUR BROWSER
-      </div>
-      <h1>EMOJI SMUGGLER</h1>
-      <p class="tagline">Zero-Width Character Steganography Engine &nbsp;//&nbsp; v2.1</p>
-      <div class="meta">
-        <span>U+200C (ZWNJ) &rarr; BIT 0</span><span class="sep">//</span>
-        <span>U+200B (ZWS) &rarr; BIT 1</span><span class="sep">//</span>
-        <span>U+200D (ZWJ) &rarr; CHAR SEPARATOR</span><span class="sep">//</span>
-        <span>8-BIT ASCII</span>
-      </div>
-    </header>
+    <!-- ── WEBCORNER ── -->
+    <svg class="web-corner" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="web-glow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="var(--green)" stop-opacity="0.8" />
+          <stop offset="100%" stop-color="var(--green)" stop-opacity="0" />
+        </radialGradient>
+      </defs>
+
+      <!-- Anchor threads -->
+      <path fill="none" stroke="currentColor" stroke-width="0.8"
+        d="M100 0 L0 0 M100 0 L15 15 M100 0 L35 35 M100 0 L60 60 M100 0 L85 85 M100 0 L100 100 M100 0 L100 50 M100 0 L50 0 M100 0 L75 0">
+      </path>
+
+      <!-- Outer spiral -->
+      <path fill="none" stroke="currentColor" stroke-width="0.4" d="M35 0 Q 30 18 50 30 T 70 50 T 90 70 Q 95 85 100 95">
+      </path>
+
+      <!-- Inner spirals -->
+      <path fill="none" stroke="currentColor" stroke-width="0.3" d="M55 0 Q 52 15 65 25 T 80 40 T 95 55"></path>
+      <path fill="none" stroke="currentColor" stroke-width="0.25" d="M75 0 Q 75 10 85 15 T 95 25"></path>
+
+      <!-- Random connecting webbing -->
+      <path fill="none" stroke="currentColor" stroke-width="0.2" opacity="0.6"
+        d="M15 15 Q 25 10 35 0 M35 35 Q 40 20 65 25 M60 60 Q 65 40 80 40 M85 85 Q 90 60 95 55"></path>
+      <path fill="none" stroke="currentColor" stroke-width="0.15" opacity="0.5"
+        d="M50 30 Q 55 20 75 0 M70 50 Q 75 30 95 25 M90 70 Q 95 60 100 50"></path>
+
+      <!-- Center Glow -->
+      <circle cx="95" cy="5" r="15" fill="url(#web-glow)" opacity="0.3"></circle>
+    </svg>
+
+    <!-- HEADER STRIP (Separated) -->
+    <div class="header-strip"
+      style="background:rgba(14, 14, 14, 0.65); border-bottom:1px solid var(--border); margin-bottom: 4rem; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
+      <header style="padding: 2.5rem 2rem 2.5rem; max-width:1280px; margin:0 auto;">
+        <div class="badge">
+          <span class="badge-dot"></span>
+          SYSTEM ONLINE &mdash; ALL PROCESSING IS LOCAL &mdash; NO DATA LEAVES YOUR BROWSER &nbsp;//&nbsp; &copy;
+          HMZ-MTR
+        </div>
+        <h1>EMOJI SMUGGLER</h1>
+        <p class="tagline" style="font-size: 0.65rem;">Zero-Width Character Steganography Engine &nbsp;//&nbsp; v2.1</p>
+        <div class="meta" style="margin-top: 2rem; font-size: 0.55rem;">
+          <span>U+200C (ZWNJ) &rarr; BIT 0</span><span class="sep">//</span>
+          <span>U+200B (ZWS) &rarr; BIT 1</span><span class="sep">//</span>
+          <span>U+200D (ZWJ) &rarr; CHAR SEPARATOR</span><span class="sep">//</span>
+          <span>8-BIT ASCII</span>
+        </div>
+      </header>
+    </div>
 
     <!-- PANELS -->
     <div class="wrap">
@@ -1123,13 +1172,11 @@
 
         <!-- INJECT -->
         <section class="panel inject">
-          <div class="ph">
+          <div class="ph" style="padding-bottom:1.2rem;">
             <div class="ph-text">
-              <div class="ph-mod">Module 01</div>
               <div class="ph-title">INJECT</div>
               <div class="ph-sub">Embed payload into emoji carrier</div>
             </div>
-            <div class="ph-num">01</div>
           </div>
 
           <div class="field">
@@ -1179,13 +1226,11 @@
 
         <!-- EXTRACT -->
         <section class="panel extract">
-          <div class="ph">
+          <div class="ph" style="padding-bottom:1.2rem;">
             <div class="ph-text">
-              <div class="ph-mod">Module 02</div>
               <div class="ph-title">EXTRACT</div>
               <div class="ph-sub">Scan and reveal hidden payloads</div>
             </div>
-            <div class="ph-num">02</div>
           </div>
 
           <div class="field">
@@ -1231,7 +1276,8 @@
     </div>
 
     <footer>
-      EMOJI SMUGGLER &nbsp;//&nbsp; ALL PROCESSING LOCAL &mdash; NO SERVERS &mdash; NO LOGS &nbsp;//&nbsp;
+      EMOJI SMUGGLER &nbsp;//&nbsp; ALL PROCESSING LOCAL &mdash; NO SERVERS &mdash; NO LOGS &nbsp;//&nbsp; &copy;
+      HMZ-MTR<br><br>
       <a href="https://en.wikipedia.org/wiki/Zero-width_space" target="_blank">U+200B</a>
       &nbsp;&amp;&nbsp;
       <a href="https://en.wikipedia.org/wiki/Zero-width_non-joiner" target="_blank">U+200C</a>
