@@ -1,0 +1,1549 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EMOJI SMUGGLER // ZWC Steganography</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700;800&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080808;
+      --surface: #0e0e0e;
+      --surface2: #131313;
+      --surface3: #181818;
+      --green: #00ff41;
+      --amber: #f0a500;
+      --red: #ff3333;
+      --text: #b8e8b8;
+      --text-dim: #486848;
+      --text-muted: #2a3a2a;
+      --border: #1a2a1a;
+      --border2: #243a24;
+      --mono: 'JetBrains Mono', monospace;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--mono);
+      min-height: 100vh;
+      overflow-x: hidden;
+      cursor: crosshair;
+    }
+
+    /* Scanlines */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      pointer-events: none;
+      background: repeating-linear-gradient(0deg, transparent 0px, transparent 3px,
+          rgba(0, 0, 0, 0.06) 3px, rgba(0, 0, 0, 0.06) 4px);
+    }
+
+    /* Ambient glows */
+    .blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(130px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.055;
+    }
+
+    .blob-g {
+      width: 700px;
+      height: 700px;
+      background: var(--green);
+      top: -280px;
+      left: -200px;
+    }
+
+    .blob-a {
+      width: 600px;
+      height: 600px;
+      background: var(--amber);
+      bottom: -250px;
+      right: -200px;
+    }
+
+    /* ── HEADER ── */
+    header {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 5rem 2rem 4rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      border: 1px solid var(--border2);
+      padding: 0.32rem 1.1rem;
+      font-size: 0.57rem;
+      letter-spacing: 0.3em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      margin-bottom: 2.2rem;
+      background: var(--surface);
+    }
+
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: pdot 2s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes pdot {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: 0.25
+      }
+    }
+
+    h1 {
+      font-size: clamp(2.2rem, 5.5vw, 4rem);
+      font-weight: 800;
+      letter-spacing: 0.13em;
+      color: var(--green);
+      text-transform: uppercase;
+      text-shadow: 0 0 25px rgba(0, 255, 65, 0.55), 0 0 70px rgba(0, 255, 65, 0.18);
+      animation: flicker 7s ease-in-out infinite;
+      cursor: default;
+    }
+
+    @keyframes flicker {
+
+      0%,
+      91%,
+      100% {
+        opacity: 1
+      }
+
+      92% {
+        opacity: .8
+      }
+
+      93% {
+        opacity: 1
+      }
+
+      95% {
+        opacity: .65
+      }
+
+      96% {
+        opacity: 1
+      }
+    }
+
+    h1:hover {
+      animation: glitch 0.45s ease forwards;
+    }
+
+    @keyframes glitch {
+      0% {
+        transform: translateX(0);
+        text-shadow: 0 0 25px rgba(0, 255, 65, 0.55);
+      }
+
+      20% {
+        transform: translateX(3px);
+        text-shadow: -4px 0 #f00, 4px 0 #0ff;
+      }
+
+      40% {
+        transform: translateX(-3px);
+        text-shadow: 4px 0 #f00, -4px 0 #0ff;
+      }
+
+      60% {
+        transform: translateX(2px);
+        text-shadow: -2px 0 #f00, 2px 0 #0ff;
+      }
+
+      80% {
+        transform: translateX(-1px);
+      }
+
+      100% {
+        transform: translateX(0);
+        text-shadow: 0 0 25px rgba(0, 255, 65, 0.55);
+      }
+    }
+
+    .tagline {
+      margin-top: 1rem;
+      font-size: 0.67rem;
+      color: var(--text-dim);
+      letter-spacing: 0.38em;
+      text-transform: uppercase;
+    }
+
+    .meta {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1.8rem;
+      margin-top: 2.8rem;
+      font-size: 0.57rem;
+      color: var(--text-muted);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      flex-wrap: wrap;
+    }
+
+    .meta .sep {
+      color: var(--border2);
+    }
+
+    /* ── PAGE WRAPPER ── */
+    .wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 4rem 6rem;
+    }
+
+    @media (max-width: 1000px) {
+      .wrap {
+        padding: 0 2rem 5rem;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .wrap {
+        padding: 0 1.2rem 4rem;
+      }
+    }
+
+    /* ── PANELS ── */
+    .panels {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3px;
+    }
+
+    @media (max-width: 860px) {
+      .panels {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 3rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+      position: relative;
+    }
+
+    .panel::before {
+      content: '';
+      position: absolute;
+      top: -1px;
+      left: 8%;
+      right: 8%;
+      height: 1px;
+    }
+
+    .panel.inject::before {
+      background: linear-gradient(90deg, transparent, var(--green), transparent);
+    }
+
+    .panel.extract::before {
+      background: linear-gradient(90deg, transparent, var(--amber), transparent);
+    }
+
+    .panel::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 18px;
+      height: 18px;
+      border-right: 1px solid var(--border2);
+      border-bottom: 1px solid var(--border2);
+    }
+
+    /* ── Panel head ── */
+    .ph {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .ph-text {
+      display: flex;
+      flex-direction: column;
+      gap: .45rem;
+    }
+
+    .ph-mod {
+      font-size: .56rem;
+      letter-spacing: .35em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .ph-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+    }
+
+    .panel.inject .ph-title {
+      color: var(--green);
+    }
+
+    .panel.extract .ph-title {
+      color: var(--amber);
+    }
+
+    .ph-sub {
+      font-size: .58rem;
+      color: var(--text-muted);
+      letter-spacing: .14em;
+    }
+
+    .ph-num {
+      font-size: 3rem;
+      font-weight: 800;
+      opacity: .04;
+      line-height: 1;
+      user-select: none;
+      letter-spacing: -.02em;
+    }
+
+    .panel.inject .ph-num {
+      color: var(--green);
+    }
+
+    .panel.extract .ph-num {
+      color: var(--amber);
+    }
+
+    /* ── Field ── */
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: .65rem;
+    }
+
+    .flabel {
+      font-size: .58rem;
+      letter-spacing: .28em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+
+    .flabel::before {
+      content: '';
+      display: inline-block;
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+    }
+
+    .panel.inject .flabel::before {
+      background: var(--green);
+      box-shadow: 0 0 4px var(--green);
+    }
+
+    .panel.extract .flabel::before {
+      background: var(--amber);
+      box-shadow: 0 0 4px var(--amber);
+    }
+
+    /* ── Inputs ── */
+    input[type="text"],
+    textarea {
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: .88rem;
+      padding: 1rem 1.25rem;
+      width: 100%;
+      resize: vertical;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s, background .2s;
+      caret-color: var(--green);
+      line-height: 1.7;
+    }
+
+    input[type="text"] {
+      resize: none;
+    }
+
+    .panel.inject input:focus,
+    .panel.inject textarea:focus {
+      border-color: var(--green);
+      background: var(--surface2);
+      box-shadow: 0 0 0 1px rgba(0, 255, 65, .1), inset 0 0 30px rgba(0, 255, 65, .03);
+    }
+
+    .panel.extract input:focus,
+    .panel.extract textarea:focus {
+      border-color: var(--amber);
+      background: var(--surface2);
+      box-shadow: 0 0 0 1px rgba(240, 165, 0, .1), inset 0 0 30px rgba(240, 165, 0, .03);
+      caret-color: var(--amber);
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    .emoji-field {
+      font-size: 1.35rem;
+      letter-spacing: .2em;
+    }
+
+    .secret-field {
+      min-height: 130px;
+    }
+
+    .paste-field {
+      min-height: 230px;
+    }
+
+    .field-foot {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .counter {
+      font-size: .56rem;
+      color: var(--text-muted);
+      letter-spacing: .1em;
+    }
+
+    .counter b {
+      color: var(--text-dim);
+      font-weight: 600;
+    }
+
+    /* Divider */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      color: var(--text-muted);
+      font-size: .56rem;
+      letter-spacing: .25em;
+      text-transform: uppercase;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: .7rem;
+      font-family: var(--mono);
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+      padding: .95rem 1.8rem;
+      border: 1px solid;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: all .2s;
+      white-space: nowrap;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: currentColor;
+      opacity: 0;
+      transition: opacity .15s;
+    }
+
+    .btn:hover::before {
+      opacity: .06;
+    }
+
+    .btn:active {
+      transform: scale(.985);
+    }
+
+    .btn::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 55%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .04), transparent);
+      transition: left .4s;
+    }
+
+    .btn:hover::after {
+      left: 150%;
+    }
+
+    .btn-inject {
+      color: var(--green);
+      border-color: var(--green);
+      background: transparent;
+      box-shadow: 0 0 18px rgba(0, 255, 65, .1), inset 0 0 18px rgba(0, 255, 65, .03);
+      width: 100%;
+    }
+
+    .btn-inject:hover {
+      box-shadow: 0 0 35px rgba(0, 255, 65, .22), inset 0 0 20px rgba(0, 255, 65, .06);
+    }
+
+    .btn-extract {
+      color: var(--amber);
+      border-color: var(--amber);
+      background: transparent;
+      box-shadow: 0 0 18px rgba(240, 165, 0, .1), inset 0 0 18px rgba(240, 165, 0, .03);
+      flex: 1;
+    }
+
+    .btn-extract:hover {
+      box-shadow: 0 0 35px rgba(240, 165, 0, .22), inset 0 0 20px rgba(240, 165, 0, .06);
+    }
+
+    .btn-clear {
+      color: var(--text-dim);
+      border-color: var(--border2);
+      background: transparent;
+      padding: .95rem 1.2rem;
+      font-size: .65rem;
+    }
+
+    .btn-copy {
+      font-size: .56rem;
+      letter-spacing: .18em;
+      padding: .38rem .9rem;
+      color: var(--text-dim);
+      border-color: var(--border2);
+      background: transparent;
+    }
+
+    .btn-copy:hover {
+      color: var(--green);
+      border-color: var(--green);
+    }
+
+    .panel.extract .btn-copy:hover {
+      color: var(--amber);
+      border-color: var(--amber);
+    }
+
+    .btn-copy.copied {
+      color: var(--green);
+      border-color: var(--green);
+      box-shadow: 0 0 8px rgba(0, 255, 65, .2);
+    }
+
+    /* ── Output ── */
+    .out-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: .65rem;
+    }
+
+    .out-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .5rem;
+    }
+
+    .out-lbl {
+      font-size: .56rem;
+      letter-spacing: .25em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .output-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 1.3rem 1.5rem;
+      min-height: 95px;
+      font-size: .85rem;
+      line-height: 1.75;
+      word-break: break-all;
+      transition: border-color .3s, box-shadow .3s;
+      position: relative;
+    }
+
+    .output-box.ok-green {
+      border-color: rgba(0, 255, 65, .32);
+      box-shadow: 0 0 20px rgba(0, 255, 65, .06);
+    }
+
+    .output-box.ok-amber {
+      border-color: rgba(240, 165, 0, .32);
+      box-shadow: 0 0 20px rgba(240, 165, 0, .06);
+    }
+
+    .output-box.err {
+      border-color: rgba(255, 51, 51, .32);
+      box-shadow: 0 0 20px rgba(255, 51, 51, .06);
+    }
+
+    .out-ph {
+      color: var(--text-muted);
+      font-style: italic;
+      font-size: .72rem;
+      user-select: none;
+    }
+
+    .out-emoji {
+      font-size: 1.15rem;
+      letter-spacing: .14rem;
+      word-break: break-all;
+    }
+
+    .out-decoded {
+      color: var(--amber);
+      font-size: .9rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.85;
+    }
+
+    .out-err {
+      color: var(--red);
+      font-size: .8rem;
+      line-height: 1.8;
+    }
+
+    .decrypt-line {
+      color: var(--amber);
+      font-size: .75rem;
+      letter-spacing: .1em;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+
+    .dcursor {
+      display: inline-block;
+      width: 7px;
+      height: .9em;
+      background: var(--amber);
+      animation: blink .65s step-end infinite;
+      vertical-align: middle;
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: 0
+      }
+    }
+
+    .bitstream {
+      font-size: .52rem;
+      color: rgba(240, 165, 0, .2);
+      word-break: break-all;
+      margin-bottom: .6rem;
+      max-height: 2em;
+      overflow: hidden;
+    }
+
+    /* Stats */
+    .stats {
+      display: flex;
+      gap: .45rem;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      font-size: .54rem;
+      letter-spacing: .15em;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      padding: .2rem .7rem;
+      white-space: nowrap;
+    }
+
+    .panel.inject .pill b {
+      color: var(--green);
+      font-weight: 700;
+    }
+
+    .panel.extract .pill b {
+      color: var(--amber);
+      font-weight: 700;
+    }
+
+    /* Info */
+    .info {
+      background: var(--surface3);
+      border-left: 2px solid rgba(0, 255, 65, .2);
+      padding: .95rem 1.2rem;
+      font-size: .61rem;
+      color: var(--text-dim);
+      line-height: 1.9;
+      letter-spacing: .04em;
+    }
+
+    .panel.extract .info {
+      border-left-color: rgba(240, 165, 0, .2);
+    }
+
+    .info strong {
+      font-weight: 600;
+      letter-spacing: .08em;
+    }
+
+    .panel.inject .info strong {
+      color: rgba(0, 255, 65, .65);
+    }
+
+    .panel.extract .info strong {
+      color: rgba(240, 165, 0, .65);
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 2.5rem 2rem;
+      font-size: .56rem;
+      color: var(--text-muted);
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      border-top: 1px solid var(--border);
+      margin-top: 5rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    footer a {
+      color: var(--border2);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      color: var(--green);
+    }
+
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--border2);
+    }
+
+    /* ── PASSWORD GATE ── */
+    #gate {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    #gate::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(0deg, transparent 0px, transparent 3px,
+          rgba(0, 0, 0, 0.07) 3px, rgba(0, 0, 0, 0.07) 4px);
+      pointer-events: none;
+    }
+
+    .gate-blob-g {
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      background: var(--green);
+      filter: blur(140px);
+      opacity: .055;
+      top: -200px;
+      left: -150px;
+      pointer-events: none;
+    }
+
+    .gate-blob-a {
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      background: var(--amber);
+      filter: blur(140px);
+      opacity: .055;
+      bottom: -200px;
+      right: -150px;
+      pointer-events: none;
+    }
+
+    .gate-box {
+      position: relative;
+      z-index: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 3.5rem 3.5rem 3rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+      width: min(420px, 92vw);
+    }
+
+    .gate-box::before {
+      content: '';
+      position: absolute;
+      top: -1px;
+      left: 10%;
+      right: 10%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--green), transparent);
+    }
+
+    .gate-box::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 16px;
+      height: 16px;
+      border-right: 1px solid var(--border2);
+      border-bottom: 1px solid var(--border2);
+    }
+
+    .gate-title {
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      font-weight: 800;
+      letter-spacing: .13em;
+      color: var(--green);
+      text-transform: uppercase;
+      text-shadow: 0 0 20px rgba(0, 255, 65, .5), 0 0 60px rgba(0, 255, 65, .15);
+      text-align: center;
+      animation: flicker 7s ease-in-out infinite;
+    }
+
+    .gate-sub {
+      font-size: .6rem;
+      letter-spacing: .3em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      text-align: center;
+      margin-top: -.5rem;
+    }
+
+    .gate-field {
+      display: flex;
+      flex-direction: column;
+      gap: .6rem;
+      width: 100%;
+    }
+
+    .gate-label {
+      font-size: .57rem;
+      letter-spacing: .28em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: .45rem;
+    }
+
+    .gate-label::before {
+      content: '';
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 4px var(--green);
+      display: inline-block;
+    }
+
+    #gateInput {
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 1rem;
+      padding: 1rem 1.25rem;
+      width: 100%;
+      outline: none;
+      letter-spacing: .15em;
+      transition: border-color .2s, box-shadow .2s;
+      caret-color: var(--green);
+    }
+
+    #gateInput:focus {
+      border-color: var(--green);
+      background: var(--surface2);
+      box-shadow: 0 0 0 1px rgba(0, 255, 65, .1), inset 0 0 30px rgba(0, 255, 65, .03);
+    }
+
+    #gateInput::placeholder {
+      color: var(--text-muted);
+      font-style: italic;
+      letter-spacing: .1em;
+    }
+
+    .gate-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .7rem;
+      font-family: var(--mono);
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+      padding: 1rem;
+      border: 1px solid var(--green);
+      color: var(--green);
+      background: transparent;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 18px rgba(0, 255, 65, .1), inset 0 0 18px rgba(0, 255, 65, .03);
+      transition: all .2s;
+    }
+
+    .gate-btn:hover {
+      box-shadow: 0 0 35px rgba(0, 255, 65, .22), inset 0 0 20px rgba(0, 255, 65, .06);
+    }
+
+    .gate-btn::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 55%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .04), transparent);
+      transition: left .4s;
+    }
+
+    .gate-btn:hover::after {
+      left: 150%;
+    }
+
+    .gate-btn:active {
+      transform: scale(.985);
+    }
+
+    .gate-err {
+      font-size: .62rem;
+      letter-spacing: .1em;
+      color: var(--red);
+      text-align: center;
+      min-height: 1em;
+      animation: shakeErr .35s ease;
+    }
+
+    @keyframes shakeErr {
+
+      0%,
+      100% {
+        transform: translateX(0)
+      }
+
+      20% {
+        transform: translateX(-6px)
+      }
+
+      40% {
+        transform: translateX(6px)
+      }
+
+      60% {
+        transform: translateX(-4px)
+      }
+
+      80% {
+        transform: translateX(4px)
+      }
+    }
+
+    .gate-hint {
+      font-size: .54rem;
+      color: var(--text-muted);
+      letter-spacing: .15em;
+      text-align: center;
+    }
+
+    /* hide main content until unlocked */
+    #appContent {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="blob blob-g"></div>
+  <div class="blob blob-a"></div>
+
+  <!-- ── PASSWORD GATE ── -->
+  <div id="gate">
+    <div class="gate-blob-g"></div>
+    <div class="gate-blob-a"></div>
+    <div class="gate-box">
+      <div>
+        <div class="gate-title">EMOJI SMUGGLER</div>
+        <div class="gate-sub">Access restricted &nbsp;//&nbsp; Enter passphrase</div>
+      </div>
+      <div class="gate-field">
+        <div class="gate-label">Passphrase</div>
+        <input type="password" id="gateInput" placeholder="enter passphrase..." autocomplete="off" spellcheck="false"
+          onkeydown="if(event.key==='Enter') checkPass()">
+      </div>
+      <div id="gateErr" class="gate-err"></div>
+      <button class="gate-btn" onclick="checkPass()">&#x25C6;&nbsp; UNLOCK</button>
+      <div class="gate-hint">// session expires when you close the tab //</div>
+    </div>
+  </div>
+
+  <!-- ── MAIN APP (hidden until unlocked) ── -->
+  <div id="appContent">
+
+    <!-- HEADER -->
+    <header>
+      <div class="badge">
+        <span class="badge-dot"></span>
+        SYSTEM ONLINE &mdash; ALL PROCESSING IS LOCAL &mdash; NO DATA LEAVES YOUR BROWSER
+      </div>
+      <h1>EMOJI SMUGGLER</h1>
+      <p class="tagline">Zero-Width Character Steganography Engine &nbsp;//&nbsp; v2.1</p>
+      <div class="meta">
+        <span>U+200C (ZWNJ) &rarr; BIT 0</span><span class="sep">//</span>
+        <span>U+200B (ZWS) &rarr; BIT 1</span><span class="sep">//</span>
+        <span>U+200D (ZWJ) &rarr; CHAR SEPARATOR</span><span class="sep">//</span>
+        <span>8-BIT ASCII</span>
+      </div>
+    </header>
+
+    <!-- PANELS -->
+    <div class="wrap">
+      <div class="panels">
+
+        <!-- INJECT -->
+        <section class="panel inject">
+          <div class="ph">
+            <div class="ph-text">
+              <div class="ph-mod">Module 01</div>
+              <div class="ph-title">INJECT</div>
+              <div class="ph-sub">Embed payload into emoji carrier</div>
+            </div>
+            <div class="ph-num">01</div>
+          </div>
+
+          <div class="field">
+            <div class="flabel">Emoji carrier string</div>
+            <input type="text" id="emojiInput" class="emoji-field" placeholder="paste your emojis here..."
+              autocomplete="off" autocorrect="off" spellcheck="false" maxlength="500">
+          </div>
+
+          <div class="field">
+            <div class="flabel">Secret payload</div>
+            <textarea id="secretInput" class="secret-field" placeholder="your hidden message goes here..."
+              autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
+            <div class="field-foot">
+              <div class="counter"><b id="s_chars">0</b> chars &nbsp;&middot;&nbsp; <b id="s_bits">0</b> bits
+                &nbsp;&middot;&nbsp; <b id="s_zwc">0</b> ZWC</div>
+            </div>
+          </div>
+
+          <button class="btn btn-inject" onclick="doInject()">&#x25C6;&nbsp; INJECT PAYLOAD</button>
+
+          <div class="divider">encoded output</div>
+
+          <div class="out-wrap">
+            <div class="out-head">
+              <span class="out-lbl">Carrier with hidden data</span>
+              <button class="btn btn-copy" id="copyInjectBtn">&#9675; COPY</button>
+            </div>
+            <div class="output-box" id="injectOutput">
+              <span class="out-ph">// output will appear here after injection...</span>
+            </div>
+          </div>
+
+          <div class="stats" id="injectStats" style="display:none">
+            <div class="pill">CHARS <b id="si_chars">—</b></div>
+            <div class="pill">BITS <b id="si_bits">—</b></div>
+            <div class="pill">ZWC INJECTED <b id="si_zwc">—</b></div>
+            <div class="pill">EMOJIS <b id="si_emojis">—</b></div>
+          </div>
+
+          <div class="info">
+            <strong>HOW IT WORKS</strong> &mdash; Each character is converted to 8-bit ASCII binary.
+            Bit <strong>0</strong> &rarr; U+200C (ZWNJ), bit <strong>1</strong> &rarr; U+200B (ZWS).
+            Characters are separated by U+200D (ZWJ). These invisible codepoints are woven between
+            the emoji characters. The output looks completely normal but carries a hidden payload.
+          </div>
+        </section>
+
+        <!-- EXTRACT -->
+        <section class="panel extract">
+          <div class="ph">
+            <div class="ph-text">
+              <div class="ph-mod">Module 02</div>
+              <div class="ph-title">EXTRACT</div>
+              <div class="ph-sub">Scan and reveal hidden payloads</div>
+            </div>
+            <div class="ph-num">02</div>
+          </div>
+
+          <div class="field">
+            <div class="flabel">Suspicious text input</div>
+            <textarea id="extractInput" class="paste-field"
+              placeholder="paste any text here to scan for hidden data...&#10;&#10;works on anything — messages, tweets, documents."
+              autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
+          </div>
+
+          <div style="display:flex;gap:.6rem">
+            <button class="btn btn-extract" onclick="doExtract()">&#x25C6;&nbsp; ANALYZE &amp; EXTRACT</button>
+            <button class="btn btn-clear" onclick="clearExtract()" title="Clear">&#x2715;</button>
+          </div>
+
+          <div class="divider">analysis result</div>
+
+          <div class="out-wrap">
+            <div class="out-head">
+              <span class="out-lbl">Decrypted payload</span>
+              <button class="btn btn-copy" id="copyExtractBtn">&#9675; COPY</button>
+            </div>
+            <div class="output-box" id="extractOutput">
+              <span class="out-ph">// awaiting input for analysis...</span>
+            </div>
+          </div>
+
+          <div class="stats" id="extractStats" style="display:none">
+            <div class="pill">ZWC FOUND <b id="e_zwc">—</b></div>
+            <div class="pill">BITS <b id="e_bits">—</b></div>
+            <div class="pill">CHARS <b id="e_chars">—</b></div>
+            <div class="pill">STATUS <b id="e_status">—</b></div>
+          </div>
+
+          <div class="info">
+            <strong>DETECTION</strong> &mdash; Scans every Unicode codepoint for U+200B, U+200C, and U+200D
+            characters. Splits on U+200D separators, decodes each 8-bit segment back to ASCII.
+            Works on any copy-pasted text from any platform.
+            <strong>Invisible to the naked eye and standard content filters.</strong>
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+    <footer>
+      EMOJI SMUGGLER &nbsp;//&nbsp; ALL PROCESSING LOCAL &mdash; NO SERVERS &mdash; NO LOGS &nbsp;//&nbsp;
+      <a href="https://en.wikipedia.org/wiki/Zero-width_space" target="_blank">U+200B</a>
+      &nbsp;&amp;&nbsp;
+      <a href="https://en.wikipedia.org/wiki/Zero-width_non-joiner" target="_blank">U+200C</a>
+      &nbsp;&amp;&nbsp;
+      <a href="https://en.wikipedia.org/wiki/Zero-width_joiner" target="_blank">U+200D</a>
+    </footer>
+
+  </div><!-- /appContent -->
+
+  <script>
+    // ─────────────────────────────────────────────────
+    // PASSWORD GATE
+    // Change PASS below to update the password.
+    // ─────────────────────────────────────────────────
+    const PASS = (function (_0x11, _0x22) { var _0x33 = window['\x61\x74\x6f\x62'](_0x11); var _0x44 = []; for (var _0x55 = 0x0; _0x55 < _0x33['\x6c\x65\x6e\x67\x74\x68']; _0x55++) { _0x44['\x70\x75\x73\x68'](String['\x66\x72\x6F\x6D\x43\x68\x61\x72\x43\x6F\x64\x65'](_0x33['\x63\x68\x61\x72\x43\x6f\x64\x65\x41\x74'](_0x55) ^ _0x22)); } return _0x44['\x6A\x6F\x69\x6E'](''); })('\x4b\x79\x77\x73\x4b\x77\x3d\x3d', 0x1E);
+
+    function checkPass() {
+      const input = document.getElementById('gateInput').value;
+      const errEl = document.getElementById('gateErr');
+
+      if (input === PASS) {
+        // Unlock: fade gate out, show app
+        const gate = document.getElementById('gate');
+        gate.style.transition = 'opacity .5s ease';
+        gate.style.opacity = '0';
+        setTimeout(() => {
+          gate.style.display = 'none';
+          document.getElementById('appContent').style.display = 'block';
+          initApp();
+        }, 500);
+        sessionStorage.setItem('unlocked', '1');
+      } else {
+        errEl.textContent = '⚠ wrong passphrase — try again';
+        errEl.style.animation = 'none';
+        requestAnimationFrame(() => { errEl.style.animation = 'shakeErr .35s ease'; });
+        document.getElementById('gateInput').value = '';
+        document.getElementById('gateInput').focus();
+        setTimeout(() => { errEl.textContent = ''; }, 3000);
+      }
+    }
+
+    // Skip gate if already unlocked in this session
+    window.addEventListener('DOMContentLoaded', () => {
+      if (sessionStorage.getItem('unlocked') === '1') {
+        document.getElementById('gate').style.display = 'none';
+        document.getElementById('appContent').style.display = 'block';
+        initApp();
+      } else {
+        // Auto-focus the password field
+        setTimeout(() => document.getElementById('gateInput').focus(), 100);
+      }
+    });
+
+    // ─────────────────────────────────────────────────
+    // CORRECT BIT MAPPING (verified against standard ZWC tools):
+    //   U+200C (ZWNJ) = bit 0
+    //   U+200B (ZWS)  = bit 1
+    //   U+200D (ZWJ)  = character separator
+    // ─────────────────────────────────────────────────
+    const ZWS = '\u200B'; // 1
+    const ZWNJ = '\u200C'; // 0
+    const ZWJ = '\u200D'; // separator between characters
+
+    // ── Init (runs after gate unlocks) ──
+    function initApp() {
+      document.getElementById('secretInput').addEventListener('input', liveStats);
+      document.getElementById('copyInjectBtn').onclick = () => copyBox('injectOutput', 'copyInjectBtn');
+      document.getElementById('copyExtractBtn').onclick = () => copyBox('extractOutput', 'copyExtractBtn');
+      liveStats();
+    }
+
+    // ── Encoding ──
+    // ── Cipher pipeline with key ──
+    // XOR can produce non-printable bytes, so we base64-wrap it to keep
+    // only safe ASCII going into the ZWC layer.
+    const CIPHER_KEY = (function () { var _0x1a2b = ['\x6D\x61\x70', '\x6A\x6F\x69\x6E', '\x66\x72\x6F\x6D\x43\x68\x61\x72\x43\x6F\x64\x65']; var _0x2f1 = [0x1a, 0x1d, 0x1d, 0x1a]; return _0x2f1[_0x1a2b[0]](function (_0x3c2) { return String[_0x1a2b[2]](_0x3c2 ^ 0x2f); })[_0x1a2b[1]](''); })();
+
+    function xorCipher(text) {
+      return text.split('').map((ch, i) =>
+        String.fromCharCode(ch.charCodeAt(0) ^ CIPHER_KEY.charCodeAt(i % CIPHER_KEY.length))
+      ).join('');
+    }
+
+    function encryptPayload(text) {
+      // XOR then base64 → guaranteed printable ASCII
+      const xored = xorCipher(text);
+      return btoa(unescape(encodeURIComponent(xored)));
+    }
+
+    function decryptPayload(encoded) {
+      // base64 decode then XOR
+      const xored = decodeURIComponent(escape(atob(encoded)));
+      return xorCipher(xored);
+    }
+
+    // Each character → 8 bits (ZWNJ=0, ZWS=1) → joined, then ZWJ between chars
+    function encode(text) {
+      const chars = [];
+      for (let i = 0; i < text.length; i++) {
+        const bits = text.charCodeAt(i).toString(2).padStart(8, '0');
+        let seg = '';
+        for (const b of bits) seg += b === '0' ? ZWNJ : ZWS;
+        chars.push(seg);
+      }
+      return chars.join(ZWJ);
+    }
+
+    // ── Decoding ──
+    // Split by ZWJ → each segment is 8 ZWS/ZWNJ bits → decode to char
+    function decode(input) {
+      // Collect all ZWC characters with their positions
+      let allZWC = '';
+      let totalZWC = 0;
+      for (const ch of input) {
+        if (ch === ZWS || ch === ZWNJ || ch === ZWJ) {
+          allZWC += ch;
+          totalZWC++;
+        }
+      }
+      if (!totalZWC) return null;
+
+      // Split by ZWJ separators
+      const segments = allZWC.split(ZWJ).filter(s => s.length > 0);
+
+      let text = '';
+      let totalBits = 0;
+
+      for (const seg of segments) {
+        // Each segment should be 8 bits (ZWS/ZWNJ only)
+        let bits = '';
+        for (const ch of seg) {
+          if (ch === ZWS) bits += '1';
+          else if (ch === ZWNJ) bits += '0';
+        }
+        totalBits += bits.length;
+        // Pad or trim to 8 bits
+        const padded = bits.padStart(8, '0').slice(-8);
+        const code = parseInt(padded, 2);
+        if ((code >= 32 && code < 127) || code === 10 || code === 13 || code === 9) {
+          text += String.fromCharCode(code);
+        }
+      }
+
+      // Fallback: if ZWJ-split gave no readable text, try raw 8-bit stream (no separators)
+      if (!text.trim() && totalZWC > 0) {
+        let rawBits = '';
+        for (const ch of allZWC) {
+          if (ch === ZWS) rawBits += '1';
+          else if (ch === ZWNJ) rawBits += '0';
+        }
+        let fallback = '';
+        for (let i = 0; i + 8 <= rawBits.length; i += 8) {
+          const code = parseInt(rawBits.slice(i, i + 8), 2);
+          if ((code >= 32 && code < 127) || code === 10 || code === 13)
+            fallback += String.fromCharCode(code);
+        }
+        if (fallback.trim()) text = fallback;
+        totalBits = rawBits.length;
+      }
+
+      return { text, totalBits, totalZWC, segments: segments.length };
+    }
+
+    // ── Inject payload into emoji carrier ──
+    function inject(emojis, secret) {
+      const zwc = encode(secret);
+      const seg = typeof Intl !== 'undefined' && Intl.Segmenter
+        ? [...new Intl.Segmenter().segment(emojis)].map(s => s.segment)
+        : [...emojis];
+      if (!seg.length) return zwc;
+      const chunk = Math.ceil(zwc.length / seg.length);
+      let out = '', pos = 0;
+      for (const c of seg) {
+        out += c + zwc.slice(pos, pos + chunk);
+        pos += chunk;
+      }
+      if (pos < zwc.length) out += zwc.slice(pos);
+      return out;
+    }
+
+    // ── Live stats ──
+    function liveStats() {
+      const n = document.getElementById('secretInput').value.length;
+      $('s_chars', n);
+      $('s_bits', n * 8);
+      $('s_zwc', n * 8 + n); // 8 ZWC per char + 1 ZWJ separator each
+    }
+
+    // ── Inject handler ──
+    function doInject() {
+      const emojis = document.getElementById('emojiInput').value.trim();
+      const secret = document.getElementById('secretInput').value;
+      const box = document.getElementById('injectOutput');
+
+      if (!secret) { showErr(box, '&#x26A0; Secret payload is empty.'); return; }
+
+      const encoded = inject(emojis || '\uD83D\uDD12', encryptPayload(secret)); // cipher then inject
+      const zwcN = (encoded.match(/[\u200B\u200C\u200D]/g) || []).length;
+      const emojiCount = emojis
+        ? (typeof Intl !== 'undefined' && Intl.Segmenter
+          ? [...new Intl.Segmenter().segment(emojis)].length
+          : [...emojis].length)
+        : 1;
+
+      box.className = 'output-box ok-green';
+      box.innerHTML = `<div class="out-emoji">${esc(encoded)}</div>`;
+      box.dataset.raw = encoded;
+
+      document.getElementById('injectStats').style.display = 'flex';
+      $('si_chars', secret.length);
+      $('si_bits', secret.length * 8);
+      $('si_zwc', zwcN);
+      $('si_emojis', emojiCount);
+
+      pulse(box, 'rgba(0,255,65,.3)');
+    }
+
+    // ── Extract handler ──
+    function doExtract() {
+      const input = document.getElementById('extractInput').value;
+      const box = document.getElementById('extractOutput');
+
+      if (!input.trim()) { showErr(box, '&#x26A0; No input provided.'); return; }
+
+      box.className = 'output-box';
+      box.innerHTML = `<div class="decrypt-line">SCANNING FOR ZWC SIGNATURES<span class="dcursor"></span></div>`;
+
+      const phases = [
+        'SCANNING FOR ZWC SIGNATURES',
+        'SPLITTING ON ZWJ SEPARATORS',
+        'DECODING 8-BIT SEGMENTS',
+        'RECONSTRUCTING PAYLOAD',
+        'FINALIZING OUTPUT'
+      ];
+      let p = 0;
+      const iv = setInterval(() => {
+        if (++p < phases.length) {
+          const el = box.querySelector('.decrypt-line');
+          if (el) el.innerHTML = phases[p] + '<span class="dcursor"></span>';
+        }
+      }, 170);
+
+      setTimeout(() => {
+        clearInterval(iv);
+        const r = decode(input);
+        document.getElementById('extractStats').style.display = 'flex';
+
+        if (!r) {
+          box.className = 'output-box err';
+          box.innerHTML = `
+        <div class="out-err" style="margin-bottom:.4rem">&#x2717; NO HIDDEN DATA FOUND</div>
+        <div style="color:var(--text-muted);font-size:.7rem;line-height:1.8">
+          No Zero-Width Characters (U+200B / U+200C / U+200D) detected.<br>
+          This text carries no steganographic payload.
+        </div>`;
+          $('e_zwc', '0'); $('e_bits', '0'); $('e_chars', '0');
+          setStatus('CLEAN', 'var(--text-dim)');
+          return;
+        }
+
+        // Build bit preview (first 128 ZWS/ZWNJ, showing 0s and 1s)
+        let previewBits = '';
+        for (const ch of input) {
+          if (previewBits.length >= 128) break;
+          if (ch === ZWS) previewBits += '1';
+          else if (ch === ZWNJ) previewBits += '0';
+        }
+        const preview = previewBits + (r.totalBits > 128 ? '&hellip;' : '');
+
+        if (!r.text.trim()) {
+          box.className = 'output-box err';
+          box.innerHTML = `
+        <div class="bitstream">${preview}</div>
+        <div class="out-err">&#x26A0; ZWC FOUND (${r.totalZWC}) &mdash; Payload is empty or non-printable.<br>
+          <span style="font-size:.68rem;color:var(--text-muted)">Possible: partial copy or corrupt data.</span>
+        </div>`;
+        } else {
+          let plaintext;
+          try { plaintext = decryptPayload(r.text); } catch (e) { plaintext = r.text; } // fallback if not our format
+          box.className = 'output-box ok-amber';
+          box.innerHTML = `
+        <div class="bitstream">${preview}</div>
+        <div class="out-decoded">${esc(plaintext)}</div>`;
+          box.dataset.raw = plaintext;
+          pulse(box, 'rgba(240,165,0,.3)');
+        }
+
+        $('e_zwc', r.totalZWC);
+        $('e_bits', r.totalBits);
+        $('e_chars', r.text.length);
+        setStatus(
+          r.text.trim() ? 'PAYLOAD FOUND' : 'CORRUPT',
+          r.text.trim() ? 'var(--amber)' : 'var(--red)'
+        );
+
+      }, phases.length * 170 + 200);
+    }
+
+    // ── Helpers ──
+    function clearExtract() {
+      document.getElementById('extractInput').value = '';
+      const box = document.getElementById('extractOutput');
+      box.className = 'output-box'; box.dataset.raw = '';
+      box.innerHTML = '<span class="out-ph">// awaiting input for analysis...</span>';
+      document.getElementById('extractStats').style.display = 'none';
+    }
+
+    function showErr(box, msg) {
+      box.className = 'output-box err';
+      box.innerHTML = `<span class="out-err">${msg}</span>`;
+      setTimeout(() => {
+        if (box.className.includes('err')) {
+          box.className = 'output-box';
+          box.innerHTML = '<span class="out-ph">// output will appear here...</span>';
+        }
+      }, 3000);
+    }
+
+    function pulse(box, color) {
+      box.style.boxShadow = `0 0 40px ${color}`;
+      setTimeout(() => { box.style.boxShadow = ''; }, 700);
+    }
+
+    async function copyBox(id, btnId) {
+      const box = document.getElementById(id);
+      const txt = box.dataset.raw;
+      if (!txt) return;
+      const btn = document.getElementById(btnId);
+      try { await navigator.clipboard.writeText(txt); }
+      catch {
+        const ta = Object.assign(document.createElement('textarea'),
+          { value: txt, style: 'position:fixed;opacity:0' });
+        document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+      }
+      btn.innerHTML = '&#x2713; COPIED';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.innerHTML = '&#9675; COPY'; btn.classList.remove('copied'); }, 2000);
+    }
+
+    function $(id, v) { const e = document.getElementById(id); if (e) e.textContent = v; }
+    function setStatus(txt, col) { const e = document.getElementById('e_status'); e.textContent = txt; e.style.color = col; }
+    function esc(s) {
+      return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+  </script>
+</body>
+
+</html>
