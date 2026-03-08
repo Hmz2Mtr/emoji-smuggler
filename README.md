@@ -33,13 +33,3 @@ Each character of the payload is converted to 8-bit ASCII binary:
 - Characters are separated by `U+200D` (Zero-Width Joiner - ZWJ)
 
 These invisible codepoints are then meticulously woven into the carrier text.
-
-## 🌐 Hosting on GitHub Pages
-
-This project is fully static and can be hosted directly on GitHub Pages!
-
-1. Go to your repository **Settings**.
-2. Navigate to the **Pages** section on the left sidebar.
-3. Under **Build and deployment** > **Source**, select `Deploy from a branch`.
-4. Select the `master` or `main` branch.
-5. Save, and your site will be live! Simply navigate to the provided URL, appending `/emoji-smuggler.html` if the default file isn't named `index.html`.
